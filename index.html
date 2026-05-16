@@ -4,232 +4,611 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calculadora de Productos</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
   <style>
+    :root {
+      --neon-green:  #00ffaa;
+      --neon-cyan:   #00e5ff;
+      --neon-pink:   #ff2d78;
+      --bg-void:     #080b10;
+      --bg-panel:    rgba(255,255,255,0.04);
+      --bg-input:    rgba(255,255,255,0.06);
+      --border:      rgba(255,255,255,0.08);
+      --border-neon: rgba(0,255,170,0.35);
+      --text-primary:   #f0f4f8;
+      --text-secondary: rgba(240,244,248,0.45);
+      --text-dim:       rgba(240,244,248,0.22);
+      --radius-pill: 999px;
+      --radius-card: 28px;
+      --radius-lg:   20px;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f4f4f0;
+      font-family: 'Syne', sans-serif;
+      background: var(--bg-void);
       min-height: 100vh;
       display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 2rem 1rem;
-      color: #1a1a18;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem 4rem;
+      color: var(--text-primary);
+      overflow-x: hidden;
+    }
+
+    /* Ambient blobs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 500px; height: 500px;
+      background: var(--neon-green);
+      top: -150px; left: -150px;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: var(--neon-cyan);
+      bottom: -100px; right: -100px;
     }
 
     .container {
       width: 100%;
-      max-width: 720px;
+      max-width: 680px;
+      position: relative;
+      z-index: 1;
     }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 500;
-      margin-bottom: 1.5rem;
-      color: #1a1a18;
+    /* Header */
+    .app-header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 1rem;
+      margin-bottom: 2rem;
     }
 
+    .logo-pill {
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      border-radius: var(--radius-pill);
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: 0 0 24px rgba(0,255,170,0.4);
+    }
+
+    .app-title h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1;
+      background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .app-title p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: 'DM Mono', monospace;
+      margin-top: 3px;
+    }
+
+    /* Cards */
     .card {
-      background: #ffffff;
-      border: 0.5px solid #d6d4cb;
-      border-radius: 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      margin-bottom: 1rem;
       overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .card-header {
-      padding: 1rem 1.25rem;
-      border-bottom: 0.5px solid #d6d4cb;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .card-header span {
+    .section-tag {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
       font-weight: 500;
-      font-size: 15px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--neon-green);
+      background: rgba(0,255,170,0.08);
+      border: 1px solid rgba(0,255,170,0.2);
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
     }
 
-    .card-header i {
-      font-size: 20px;
-      color: #888780;
-    }
-
-    .form-area {
-      padding: 1rem 1.25rem;
-      border-bottom: 0.5px solid #d6d4cb;
-    }
+    /* Form */
+    .form-area { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
 
     .form-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr auto;
-      gap: 8px;
-      align-items: end;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
-    label {
-      font-size: 12px;
-      color: #888780;
+    .field-label {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
-    input[type="text"],
-    input[type="number"] {
+    .input-wrap { position: relative; }
+
+    input[type="text"], input[type="number"], select {
       width: 100%;
-      height: 36px;
-      padding: 0 10px;
-      border: 0.5px solid #d6d4cb;
-      border-radius: 8px;
-      font-size: 14px;
-      color: #1a1a18;
-      background: #fff;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    input:hover { border-color: #b4b2a9; }
-    input:focus { border-color: #888780; box-shadow: 0 0 0 3px rgba(136,135,128,0.12); }
-
-    input::placeholder { color: #b4b2a9; }
-
-    button {
-      height: 36px;
+      height: 44px;
       padding: 0 14px;
-      border: 0.5px solid #b4b2a9;
-      border-radius: 8px;
-      background: transparent;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
       font-size: 14px;
-      color: #1a1a18;
-      cursor: pointer;
-      display: inline-flex;
+      font-family: 'Syne', sans-serif;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    input::placeholder { color: var(--text-dim); }
+    input:hover { border-color: rgba(255,255,255,0.15); }
+    input:focus {
+      border-color: var(--neon-green);
+      box-shadow: 0 0 0 3px rgba(0,255,170,0.12), 0 0 20px rgba(0,255,170,0.08);
+      background: rgba(0,255,170,0.04);
+    }
+
+    input.scanned {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 3px rgba(0,229,255,0.15), 0 0 20px rgba(0,229,255,0.1);
+      background: rgba(0,229,255,0.04);
+    }
+
+    .input-scan-wrap {
+      display: flex;
+      gap: 8px;
       align-items: center;
-      gap: 6px;
-      transition: background 0.15s, transform 0.1s;
-      white-space: nowrap;
     }
+    .input-scan-wrap input { flex: 1; min-width: 0; }
 
-    button:hover { background: #f4f4f0; }
-    button:active { transform: scale(0.98); }
-
-    .btn-danger {
-      color: #a32d2d;
-      border-color: #f09595;
-      font-size: 13px;
-      height: 32px;
-    }
-
-    .btn-icon {
-      width: 28px;
-      height: 28px;
-      padding: 0;
+    /* Buttons */
+    .btn-add {
+      width: 100%;
+      height: 48px;
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      border: none;
+      border-radius: var(--radius-pill);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #080b10;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
       justify-content: center;
-      border-color: transparent;
-      color: #b4b2a9;
+      gap: 8px;
+      letter-spacing: 0.5px;
+      transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+      box-shadow: 0 0 30px rgba(0,255,170,0.25);
+    }
+    .btn-add:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 40px rgba(0,255,170,0.4);
+      filter: brightness(1.05);
+    }
+    .btn-add:active { transform: scale(0.98); }
+
+    .btn-scan {
+      width: 44px; height: 44px;
+      flex-shrink: 0;
+      border-radius: var(--radius-pill);
+      background: rgba(0,229,255,0.08);
+      border: 1px solid rgba(0,229,255,0.3);
+      color: var(--neon-cyan);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+    .btn-scan:hover {
+      background: rgba(0,229,255,0.15);
+      box-shadow: 0 0 20px rgba(0,229,255,0.3);
+    }
+    .btn-scan.active {
+      background: var(--neon-cyan);
+      color: #080b10;
+      box-shadow: 0 0 30px rgba(0,229,255,0.5);
+    }
+    .btn-scan:active { transform: scale(0.95); }
+
+    .btn-icon-del {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-pill);
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
+    }
+    .btn-icon-del:hover {
+      color: var(--neon-pink);
+      background: rgba(255,45,120,0.1);
+      border-color: rgba(255,45,120,0.3);
     }
 
-    .btn-icon:hover { color: #a32d2d; background: #fcebeb; border-color: transparent; }
+    .btn-clear {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: var(--radius-pill);
+      background: transparent;
+      border: 1px solid rgba(255,45,120,0.3);
+      color: var(--neon-pink);
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .btn-clear:hover {
+      background: rgba(255,45,120,0.1);
+      box-shadow: 0 0 20px rgba(255,45,120,0.2);
+    }
 
     .error-msg {
       display: none;
       font-size: 12px;
-      color: #a32d2d;
-      margin-top: 6px;
+      font-family: 'DM Mono', monospace;
+      color: var(--neon-pink);
+      margin-top: 8px;
+      padding: 8px 14px;
+      background: rgba(255,45,120,0.08);
+      border: 1px solid rgba(255,45,120,0.2);
+      border-radius: var(--radius-pill);
     }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 13px;
       table-layout: fixed;
     }
 
-    thead tr { background: #f4f4f0; }
+    thead tr {
+      border-bottom: 1px solid var(--border);
+    }
 
     th {
+      padding: 12px 1.5rem;
       text-align: left;
-      padding: 10px 1.25rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
       font-weight: 500;
-      color: #888780;
-      font-size: 12px;
     }
-
-    th.right, td.right { text-align: right; }
+    th.r { text-align: right; }
 
     td {
-      padding: 10px 1.25rem;
-      color: #1a1a18;
-      border-top: 0.5px solid #d6d4cb;
+      padding: 14px 1.5rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+      vertical-align: middle;
       word-break: break-word;
     }
+    td.r { text-align: right; }
+    td.dim { color: var(--text-secondary); font-family: 'DM Mono', monospace; font-size: 12px; }
+    td.total-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--neon-green);
+    }
+    td.icon-c { text-align: center; padding: 14px 8px; width: 48px; }
 
-    td.muted { color: #888780; }
-    td.bold { font-weight: 500; }
+    tr:last-child td { border-bottom: none; }
 
-    td.icon-cell {
-      padding: 10px 8px;
-      text-align: center;
-      width: 36px;
+    tbody tr {
+      transition: background 0.15s;
+    }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    .row-enter {
+      animation: rowIn 0.3s ease both;
+    }
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: translateX(0); }
     }
 
+    /* Empty state */
     .empty-state {
       text-align: center;
-      padding: 2.5rem;
-      color: #b4b2a9;
+      padding: 3rem 1.5rem;
+      color: var(--text-dim);
       font-size: 13px;
     }
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.3;
+    }
+    .empty-state p { font-family: 'DM Mono', monospace; font-size: 12px; }
 
-    .empty-state i {
-      font-size: 28px;
-      display: block;
-      margin: 0 auto 8px;
+    /* Badge escaneado */
+    .badge-scan {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 9px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 1px;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: rgba(0,229,255,0.1);
+      border: 1px solid rgba(0,229,255,0.25);
+      color: var(--neon-cyan);
+      margin-left: 8px;
+      vertical-align: middle;
+      text-transform: uppercase;
     }
 
+    /* Resumen */
     .resumen {
       display: none;
-      border-top: 0.5px solid #d6d4cb;
-      padding: 1rem 1.25rem;
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--border);
     }
 
-    .resumen-row {
+    .resumen-rows {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      font-size: 13px;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
 
-    .resumen-row span:first-child { color: #888780; }
-    .resumen-row span:last-child { font-weight: 500; }
-
-    .resumen-total {
-      border-top: 0.5px solid #d6d4cb;
-      padding-top: 12px;
+    .metric-pill {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 16px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 4px;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .metric-pill .m-label {
+      font-size: 9px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .metric-pill .m-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
     }
 
-    .resumen-total .label { font-size: 15px; font-weight: 500; }
-    .resumen-total .valor { font-size: 22px; font-weight: 500; }
+    .total-box {
+      background: linear-gradient(135deg, rgba(0,255,170,0.06), rgba(0,229,255,0.06));
+      border: 1px solid var(--border-neon);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .total-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0,255,170,0.03), transparent);
+      pointer-events: none;
+    }
+    .total-box .t-label {
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .total-box .t-val {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-family: 'DM Mono', monospace;
+    }
 
-    .resumen-actions {
-      margin-top: 12px;
+    .resumen-footer {
       display: flex;
       justify-content: flex-end;
     }
 
-    @media (max-width: 540px) {
-      .form-grid {
-        grid-template-columns: 1fr 1fr;
-      }
+    /* Scanner modal */
+    .scanner-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8,11,16,0.88);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .scanner-overlay.visible { display: flex; }
+
+    .scanner-box {
+      background: rgba(15,20,28,0.95);
+      border: 1px solid var(--border-neon);
+      border-radius: var(--radius-card);
+      width: 100%;
+      max-width: 380px;
+      overflow: hidden;
+      box-shadow: 0 0 80px rgba(0,255,170,0.15), 0 0 40px rgba(0,229,255,0.1);
+      animation: scannerIn 0.25s ease both;
+    }
+    @keyframes scannerIn {
+      from { opacity: 0; transform: scale(0.94) translateY(10px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .scanner-header {
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .scanner-header-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--neon-cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .scanner-header-title .dot {
+      width: 8px; height: 8px;
+      background: var(--neon-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--neon-green);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    .scanner-body { padding: 1.25rem 1.5rem; }
+
+    .video-wrapper {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: #000;
+      aspect-ratio: 4/3;
+      border: 1px solid var(--border-neon);
+      box-shadow: 0 0 30px rgba(0,255,170,0.1) inset;
+    }
+
+    #preview { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .scan-line {
+      position: absolute;
+      left: 5%; right: 5%;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+      animation: scanMove 2s ease-in-out infinite;
+      box-shadow: 0 0 12px var(--neon-green);
+    }
+    @keyframes scanMove { 0%{top:10%} 50%{top:85%} 100%{top:10%} }
+
+    .scan-corners { position: absolute; inset: 8%; pointer-events: none; }
+    .scan-corners::before, .scan-corners::after,
+    .scan-corners span::before, .scan-corners span::after {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      border-color: var(--neon-green); border-style: solid;
+    }
+    .scan-corners::before  { top:0; left:0;   border-width:2px 0 0 2px; border-radius:4px 0 0 0; box-shadow:-2px -2px 8px rgba(0,255,170,0.4); }
+    .scan-corners::after   { top:0; right:0;  border-width:2px 2px 0 0; border-radius:0 4px 0 0; box-shadow:2px -2px 8px rgba(0,255,170,0.4); }
+    .scan-corners span::before { bottom:0; left:0;  border-width:0 0 2px 2px; border-radius:0 0 0 4px; box-shadow:-2px 2px 8px rgba(0,255,170,0.4); }
+    .scan-corners span::after  { bottom:0; right:0; border-width:0 2px 2px 0; border-radius:0 0 4px 0; box-shadow:2px 2px 8px rgba(0,255,170,0.4); }
+
+    .scan-hint {
+      text-align: center;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      color: var(--text-secondary);
+      margin-top: 10px;
+      letter-spacing: 0.5px;
+    }
+    .scan-status {
+      text-align: center;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      margin-top: 8px;
+      min-height: 18px;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    .scan-status.ok  { color: var(--neon-green); }
+    .scan-status.err { color: var(--neon-pink); }
+
+    .camera-select-wrap { margin-top: 10px; display: none; }
+    .camera-select-wrap select {
+      border-radius: var(--radius-pill);
+      height: 40px;
+      font-size: 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0 14px;
+    }
+
+    /* Row number badge */
+    .row-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      color: var(--text-secondary);
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .prod-name-cell {
+      display: flex;
+      align-items: center;
+    }
+
+    @media (max-width: 560px) {
+      .form-grid { grid-template-columns: 1fr 1fr; }
       .form-grid > div:first-child { grid-column: 1 / -1; }
-      .form-grid > button { grid-column: 1 / -1; }
+      .resumen-rows { flex-direction: column; gap: 8px; }
+      .total-box .t-val { font-size: 22px; }
     }
   </style>
 </head>
@@ -237,86 +616,132 @@
 
 <div class="container">
 
-  <h1>
-    <i class="ti ti-calculator" aria-hidden="true"></i>
-    Calculadora de productos
-  </h1>
-
-  <div class="card">
-
-    <div class="card-header">
-      <i class="ti ti-list" aria-hidden="true"></i>
-      <span>Agregar productos</span>
+  <!-- Header -->
+  <div class="app-header">
+    <div class="logo-pill">🧮</div>
+    <div class="app-title">
+      <h1>Calculadora</h1>
+      <p>// gestión de productos</p>
     </div>
+  </div>
 
+  <!-- Formulario -->
+  <div class="card" style="animation-delay:0.05s">
+    <div class="card-header">
+      <span class="section-tag">✦ Nuevo producto</span>
+    </div>
     <div class="form-area">
       <div class="form-grid">
         <div>
-          <label for="inp-nombre">Nombre del producto</label>
-          <input type="text" id="inp-nombre" placeholder="Ej: Arroz" />
+          <label class="field-label">Nombre del producto</label>
+          <div class="input-scan-wrap">
+            <input type="text" id="inp-nombre" placeholder="Nombre o escanea ↗" />
+            <button class="btn-scan" id="btn-scan" onclick="toggleScanner()" title="Escanear código de barras" aria-label="Escanear código de barras">
+              ⌗
+            </button>
+          </div>
         </div>
         <div>
-          <label for="inp-cantidad">Cantidad</label>
+          <label class="field-label">Cantidad</label>
           <input type="number" id="inp-cantidad" placeholder="0" min="0" step="1" />
         </div>
         <div>
-          <label for="inp-valor">Valor unitario ($)</label>
+          <label class="field-label">Valor unitario $</label>
           <input type="number" id="inp-valor" placeholder="0.00" min="0" step="0.01" />
         </div>
-        <button onclick="agregarProducto()">
-          <i class="ti ti-plus" aria-hidden="true"></i> Agregar
-        </button>
       </div>
+      <button class="btn-add" onclick="agregarProducto()">
+        <span style="font-size:18px;">+</span> Agregar producto
+      </button>
       <p class="error-msg" id="msg-error"></p>
     </div>
+  </div>
 
-    <div style="overflow-x: auto;">
+  <!-- Tabla -->
+  <div class="card" style="animation-delay:0.12s">
+    <div class="card-header">
+      <span class="section-tag">✦ Productos</span>
+    </div>
+    <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th style="width:38%;">Producto</th>
-            <th class="right" style="width:16%;">Cantidad</th>
-            <th class="right" style="width:20%;">Valor unit.</th>
-            <th class="right" style="width:20%;">Total</th>
+            <th style="width:42%;">Producto</th>
+            <th class="r" style="width:14%;">Cant.</th>
+            <th class="r" style="width:20%;">Valor unit.</th>
+            <th class="r" style="width:18%;">Total</th>
             <th style="width:6%;"></th>
           </tr>
         </thead>
         <tbody id="tabla-body">
           <tr>
-            <td colspan="5" class="empty-state" id="fila-vacia">
-              <i class="ti ti-package" aria-hidden="true"></i>
-              Agrega tu primer producto
+            <td colspan="5" class="empty-state">
+              <div class="empty-icon">◎</div>
+              <p>sin productos aún</p>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
+    <!-- Resumen -->
     <div class="resumen" id="resumen">
-      <div class="resumen-row">
-        <span>Productos distintos</span>
-        <span id="res-items">0</span>
+      <div class="resumen-rows">
+        <div class="metric-pill">
+          <span class="m-label">Productos</span>
+          <span class="m-val" id="res-items">0</span>
+        </div>
+        <div class="metric-pill">
+          <span class="m-label">Unidades</span>
+          <span class="m-val" id="res-unidades">0</span>
+        </div>
       </div>
-      <div class="resumen-row">
-        <span>Unidades totales</span>
-        <span id="res-unidades">0</span>
+      <div class="total-box">
+        <span class="t-label">Gran total</span>
+        <span class="t-val" id="res-total">$0.00</span>
       </div>
-      <div class="resumen-total">
-        <span class="label">Gran total</span>
-        <span class="valor" id="res-total">$0.00</span>
-      </div>
-      <div class="resumen-actions">
-        <button class="btn-danger" onclick="limpiarTodo()">
-          <i class="ti ti-trash" aria-hidden="true"></i> Limpiar todo
+      <div class="resumen-footer">
+        <button class="btn-clear" onclick="limpiarTodo()">
+          ✕ Limpiar todo
         </button>
       </div>
     </div>
+  </div>
 
+</div>
+
+<!-- Scanner Modal -->
+<div class="scanner-overlay" id="scanner-overlay" onclick="handleOverlayClick(event)">
+  <div class="scanner-box">
+    <div class="scanner-header">
+      <div class="scanner-header-title">
+        <span class="dot"></span>
+        Escáner activo
+      </div>
+      <button class="btn-icon-del" onclick="cerrarScanner()" aria-label="Cerrar escáner" style="color:var(--text-secondary);font-size:20px;">✕</button>
+    </div>
+    <div class="scanner-body">
+      <div class="video-wrapper">
+        <video id="preview" muted playsinline></video>
+        <div class="scan-line"></div>
+        <div class="scan-corners"><span></span></div>
+      </div>
+      <div class="camera-select-wrap" id="camera-select-wrap">
+        <label class="field-label" for="camera-select" style="margin-bottom:6px;">Seleccionar cámara</label>
+        <select id="camera-select" onchange="cambiarCamara()"></select>
+      </div>
+      <p class="scan-hint">Apunta al código de barras o QR</p>
+      <p class="scan-status" id="scan-status">Iniciando cámara...</p>
+    </div>
   </div>
 </div>
 
 <script>
   let productos = [];
+  let codeReader = null;
+  let scannerActivo = false;
+  let camaras = [];
+  let camaraActual = null;
 
   function fmt(n) {
     return '$' + n.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -329,20 +754,23 @@
   }
 
   function agregarProducto() {
-    const nombre = document.getElementById('inp-nombre').value.trim();
+    const nombre   = document.getElementById('inp-nombre').value.trim();
     const cantidad = parseFloat(document.getElementById('inp-cantidad').value);
-    const valor = parseFloat(document.getElementById('inp-valor').value);
+    const valor    = parseFloat(document.getElementById('inp-valor').value);
 
-    if (!nombre) { mostrarError('Ingresa el nombre del producto.'); return; }
+    if (!nombre)                      { mostrarError('Ingresa el nombre del producto.'); return; }
     if (isNaN(cantidad) || cantidad <= 0) { mostrarError('Ingresa una cantidad válida mayor a 0.'); return; }
-    if (isNaN(valor) || valor < 0) { mostrarError('Ingresa un valor unitario válido.'); return; }
+    if (isNaN(valor) || valor < 0)    { mostrarError('Ingresa un valor unitario válido.'); return; }
     mostrarError('');
 
-    productos.push({ nombre, cantidad, valor, total: cantidad * valor });
-    document.getElementById('inp-nombre').value = '';
+    const inpNombre = document.getElementById('inp-nombre');
+    const escaneado = inpNombre.classList.contains('scanned');
+    productos.push({ nombre, cantidad, valor, total: cantidad * valor, escaneado });
+    inpNombre.value = '';
+    inpNombre.classList.remove('scanned');
     document.getElementById('inp-cantidad').value = '';
     document.getElementById('inp-valor').value = '';
-    document.getElementById('inp-nombre').focus();
+    inpNombre.focus();
     renderTabla();
   }
 
@@ -352,48 +780,137 @@
   }
 
   function limpiarTodo() {
-    if (!confirm('¿Seguro que deseas eliminar todos los productos?')) return;
+    if (!confirm('¿Eliminar todos los productos?')) return;
     productos = [];
     renderTabla();
   }
 
   function renderTabla() {
-    const tbody = document.getElementById('tabla-body');
+    const tbody   = document.getElementById('tabla-body');
     const resumen = document.getElementById('resumen');
 
     if (productos.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state" id="fila-vacia"><i class="ti ti-package" aria-hidden="true"></i>Agrega tu primer producto</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><div class="empty-icon">◎</div><p>sin productos aún</p></td></tr>`;
       resumen.style.display = 'none';
       return;
     }
 
     let rows = '';
-    let totalGeneral = 0;
-    let totalUnidades = 0;
+    let totalGeneral = 0, totalUnidades = 0;
 
     productos.forEach((p, i) => {
-      totalGeneral += p.total;
+      totalGeneral  += p.total;
       totalUnidades += p.cantidad;
-      rows += `<tr>
-        <td>${p.nombre}</td>
-        <td class="right">${p.cantidad}</td>
-        <td class="right muted">${fmt(p.valor)}</td>
-        <td class="right bold">${fmt(p.total)}</td>
-        <td class="icon-cell">
-          <button class="btn-icon" onclick="eliminarProducto(${i})" aria-label="Eliminar ${p.nombre}">
-            <i class="ti ti-x" style="font-size:15px;" aria-hidden="true"></i>
-          </button>
+      const badge = p.escaneado
+        ? `<span class="badge-scan">⌗ scan</span>`
+        : '';
+      rows += `<tr class="row-enter">
+        <td>
+          <div class="prod-name-cell">
+            <span class="row-num">${i + 1}</span>
+            <span>${p.nombre}</span>${badge}
+          </div>
+        </td>
+        <td class="r dim">${p.cantidad}</td>
+        <td class="r dim">${fmt(p.valor)}</td>
+        <td class="r total-val">${fmt(p.total)}</td>
+        <td class="icon-c">
+          <button class="btn-icon-del" onclick="eliminarProducto(${i})" aria-label="Eliminar ${p.nombre}">✕</button>
         </td>
       </tr>`;
     });
 
     tbody.innerHTML = rows;
-    document.getElementById('res-items').textContent = productos.length;
+    document.getElementById('res-items').textContent    = productos.length;
     document.getElementById('res-unidades').textContent = totalUnidades;
-    document.getElementById('res-total').textContent = fmt(totalGeneral);
+    document.getElementById('res-total').textContent    = fmt(totalGeneral);
     resumen.style.display = 'block';
   }
 
+  /* ---- Scanner ---- */
+  function toggleScanner() {
+    scannerActivo ? cerrarScanner() : abrirScanner();
+  }
+
+  async function abrirScanner() {
+    document.getElementById('scanner-overlay').classList.add('visible');
+    document.getElementById('btn-scan').classList.add('active');
+    setStatus('Iniciando cámara...', '');
+    scannerActivo = true;
+
+    try {
+      codeReader = new ZXing.BrowserMultiFormatReader();
+      camaras = await codeReader.listVideoInputDevices();
+
+      if (camaras.length === 0) { setStatus('No se encontró ninguna cámara.', 'err'); return; }
+
+      const trasera = camaras.find(c => /back|rear|environment/i.test(c.label));
+      camaraActual  = trasera ? trasera.deviceId : camaras[camaras.length - 1].deviceId;
+
+      if (camaras.length > 1) {
+        const sel = document.getElementById('camera-select');
+        sel.innerHTML = '';
+        camaras.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value     = c.deviceId;
+          opt.textContent = c.label || `Cámara ${c.deviceId.slice(0, 8)}`;
+          if (c.deviceId === camaraActual) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        document.getElementById('camera-select-wrap').style.display = 'block';
+      }
+
+      iniciarLectura(camaraActual);
+    } catch (e) {
+      setStatus('Error: ' + (e.message || e), 'err');
+    }
+  }
+
+  function iniciarLectura(deviceId) {
+    setStatus('Buscando código...', '');
+    codeReader.decodeFromVideoDevice(deviceId, 'preview', (result) => {
+      if (result) onCodigoDetectado(result.getText());
+    });
+  }
+
+  function cambiarCamara() {
+    camaraActual = document.getElementById('camera-select').value;
+    codeReader.reset();
+    iniciarLectura(camaraActual);
+  }
+
+  function onCodigoDetectado(codigo) {
+    setStatus('✓ ' + codigo, 'ok');
+    const inp = document.getElementById('inp-nombre');
+    inp.value = codigo;
+    inp.classList.add('scanned');
+    if (navigator.vibrate) navigator.vibrate(100);
+    setTimeout(() => {
+      cerrarScanner();
+      document.getElementById('inp-cantidad').focus();
+    }, 800);
+  }
+
+  function cerrarScanner() {
+    if (codeReader) { codeReader.reset(); codeReader = null; }
+    document.getElementById('scanner-overlay').classList.remove('visible');
+    document.getElementById('btn-scan').classList.remove('active');
+    document.getElementById('camera-select-wrap').style.display = 'none';
+    document.getElementById('camera-select').innerHTML = '';
+    scannerActivo = false;
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('scanner-overlay')) cerrarScanner();
+  }
+
+  function setStatus(msg, tipo) {
+    const el = document.getElementById('scan-status');
+    el.textContent  = msg;
+    el.className    = 'scan-status' + (tipo ? ' ' + tipo : '');
+  }
+
+  /* Navegación con teclado */
   document.getElementById('inp-nombre').addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('inp-cantidad').focus();
   });
@@ -402,6 +919,9 @@
   });
   document.getElementById('inp-valor').addEventListener('keydown', e => {
     if (e.key === 'Enter') agregarProducto();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && scannerActivo) cerrarScanner();
   });
 </script>
 
