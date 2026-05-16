@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Productos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f4f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem;
+      color: #1a1a18;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      color: #1a1a18;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 0.5px solid #d6d4cb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 0.5px solid #d6d4cb;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-header span {
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .card-header i {
+      font-size: 20px;
+      color: #888780;
+    }
+
+    .form-area {
+      padding: 1rem 1.25rem;
+      border-bottom: 0.5px solid #d6d4cb;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    label {
+      font-size: 12px;
+      color: #888780;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      height: 36px;
+      padding: 0 10px;
+      border: 0.5px solid #d6d4cb;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #1a1a18;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:hover { border-color: #b4b2a9; }
+    input:focus { border-color: #888780; box-shadow: 0 0 0 3px rgba(136,135,128,0.12); }
+
+    input::placeholder { color: #b4b2a9; }
+
+    button {
+      height: 36px;
+      padding: 0 14px;
+      border: 0.5px solid #b4b2a9;
+      border-radius: 8px;
+      background: transparent;
+      font-size: 14px;
+      color: #1a1a18;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    button:hover { background: #f4f4f0; }
+    button:active { transform: scale(0.98); }
+
+    .btn-danger {
+      color: #a32d2d;
+      border-color: #f09595;
+      font-size: 13px;
+      height: 32px;
+    }
+
+    .btn-icon {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      justify-content: center;
+      border-color: transparent;
+      color: #b4b2a9;
+    }
+
+    .btn-icon:hover { color: #a32d2d; background: #fcebeb; border-color: transparent; }
+
+    .error-msg {
+      display: none;
+      font-size: 12px;
+      color: #a32d2d;
+      margin-top: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      table-layout: fixed;
+    }
+
+    thead tr { background: #f4f4f0; }
+
+    th {
+      text-align: left;
+      padding: 10px 1.25rem;
+      font-weight: 500;
+      color: #888780;
+      font-size: 12px;
+    }
+
+    th.right, td.right { text-align: right; }
+
+    td {
+      padding: 10px 1.25rem;
+      color: #1a1a18;
+      border-top: 0.5px solid #d6d4cb;
+      word-break: break-word;
+    }
+
+    td.muted { color: #888780; }
+    td.bold { font-weight: 500; }
+
+    td.icon-cell {
+      padding: 10px 8px;
+      text-align: center;
+      width: 36px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem;
+      color: #b4b2a9;
+      font-size: 13px;
+    }
+
+    .empty-state i {
+      font-size: 28px;
+      display: block;
+      margin: 0 auto 8px;
+    }
+
+    .resumen {
+      display: none;
+      border-top: 0.5px solid #d6d4cb;
+      padding: 1rem 1.25rem;
+    }
+
+    .resumen-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .resumen-row span:first-child { color: #888780; }
+    .resumen-row span:last-child { font-weight: 500; }
+
+    .resumen-total {
+      border-top: 0.5px solid #d6d4cb;
+      padding-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .resumen-total .label { font-size: 15px; font-weight: 500; }
+    .resumen-total .valor { font-size: 22px; font-weight: 500; }
+
+    .resumen-actions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 540px) {
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .form-grid > div:first-child { grid-column: 1 / -1; }
+      .form-grid > button { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>
+    <i class="ti ti-calculator" aria-hidden="true"></i>
+    Calculadora de productos
+  </h1>
+
+  <div class="card">
+
+    <div class="card-header">
+      <i class="ti ti-list" aria-hidden="true"></i>
+      <span>Agregar productos</span>
+    </div>
+
+    <div class="form-area">
+      <div class="form-grid">
+        <div>
+          <label for="inp-nombre">Nombre del producto</label>
+          <input type="text" id="inp-nombre" placeholder="Ej: Arroz" />
+        </div>
+        <div>
+          <label for="inp-cantidad">Cantidad</label>
+          <input type="number" id="inp-cantidad" placeholder="0" min="0" step="1" />
+        </div>
+        <div>
+          <label for="inp-valor">Valor unitario ($)</label>
+          <input type="number" id="inp-valor" placeholder="0.00" min="0" step="0.01" />
+        </div>
+        <button onclick="agregarProducto()">
+          <i class="ti ti-plus" aria-hidden="true"></i> Agregar
+        </button>
+      </div>
+      <p class="error-msg" id="msg-error"></p>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:38%;">Producto</th>
+            <th class="right" style="width:16%;">Cantidad</th>
+            <th class="right" style="width:20%;">Valor unit.</th>
+            <th class="right" style="width:20%;">Total</th>
+            <th style="width:6%;"></th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body">
+          <tr>
+            <td colspan="5" class="empty-state" id="fila-vacia">
+              <i class="ti ti-package" aria-hidden="true"></i>
+              Agrega tu primer producto
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="resumen" id="resumen">
+      <div class="resumen-row">
+        <span>Productos distintos</span>
+        <span id="res-items">0</span>
+      </div>
+      <div class="resumen-row">
+        <span>Unidades totales</span>
+        <span id="res-unidades">0</span>
+      </div>
+      <div class="resumen-total">
+        <span class="label">Gran total</span>
+        <span class="valor" id="res-total">$0.00</span>
+      </div>
+      <div class="resumen-actions">
+        <button class="btn-danger" onclick="limpiarTodo()">
+          <i class="ti ti-trash" aria-hidden="true"></i> Limpiar todo
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let productos = [];
+
+  function fmt(n) {
+    return '$' + n.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function mostrarError(msg) {
+    const el = document.getElementById('msg-error');
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  function agregarProducto() {
+    const nombre = document.getElementById('inp-nombre').value.trim();
+    const cantidad = parseFloat(document.getElementById('inp-cantidad').value);
+    const valor = parseFloat(document.getElementById('inp-valor').value);
+
+    if (!nombre) { mostrarError('Ingresa el nombre del producto.'); return; }
+    if (isNaN(cantidad) || cantidad <= 0) { mostrarError('Ingresa una cantidad válida mayor a 0.'); return; }
+    if (isNaN(valor) || valor < 0) { mostrarError('Ingresa un valor unitario válido.'); return; }
+    mostrarError('');
+
+    productos.push({ nombre, cantidad, valor, total: cantidad * valor });
+    document.getElementById('inp-nombre').value = '';
+    document.getElementById('inp-cantidad').value = '';
+    document.getElementById('inp-valor').value = '';
+    document.getElementById('inp-nombre').focus();
+    renderTabla();
+  }
+
+  function eliminarProducto(i) {
+    productos.splice(i, 1);
+    renderTabla();
+  }
+
+  function limpiarTodo() {
+    if (!confirm('¿Seguro que deseas eliminar todos los productos?')) return;
+    productos = [];
+    renderTabla();
+  }
+
+  function renderTabla() {
+    const tbody = document.getElementById('tabla-body');
+    const resumen = document.getElementById('resumen');
+
+    if (productos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state" id="fila-vacia"><i class="ti ti-package" aria-hidden="true"></i>Agrega tu primer producto</td></tr>';
+      resumen.style.display = 'none';
+      return;
+    }
+
+    let rows = '';
+    let totalGeneral = 0;
+    let totalUnidades = 0;
+
+    productos.forEach((p, i) => {
+      totalGeneral += p.total;
+      totalUnidades += p.cantidad;
+      rows += `<tr>
+        <td>${p.nombre}</td>
+        <td class="right">${p.cantidad}</td>
+        <td class="right muted">${fmt(p.valor)}</td>
+        <td class="right bold">${fmt(p.total)}</td>
+        <td class="icon-cell">
+          <button class="btn-icon" onclick="eliminarProducto(${i})" aria-label="Eliminar ${p.nombre}">
+            <i class="ti ti-x" style="font-size:15px;" aria-hidden="true"></i>
+          </button>
+        </td>
+      </tr>`;
+    });
+
+    tbody.innerHTML = rows;
+    document.getElementById('res-items').textContent = productos.length;
+    document.getElementById('res-unidades').textContent = totalUnidades;
+    document.getElementById('res-total').textContent = fmt(totalGeneral);
+    resumen.style.display = 'block';
+  }
+
+  document.getElementById('inp-nombre').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('inp-cantidad').focus();
+  });
+  document.getElementById('inp-cantidad').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('inp-valor').focus();
+  });
+  document.getElementById('inp-valor').addEventListener('keydown', e => {
+    if (e.key === 'Enter') agregarProducto();
+  });
+</script>
+
+</body>
+</html>
